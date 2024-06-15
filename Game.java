@@ -14,6 +14,7 @@ import javax.swing.JPanel;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Font;
 
 public class Game extends JPanel implements Runnable
 {
@@ -26,7 +27,8 @@ public class Game extends JPanel implements Runnable
 
     private Pacman pacman;
     private Maze maze;
-
+    private int score = 0;
+    private int highScore = 0;
     private AI AI;
 
     public Game()
@@ -50,7 +52,7 @@ public class Game extends JPanel implements Runnable
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         window.setResizable(false);
 
-        this.setPreferredSize(new Dimension(maze.image.getWidth(), maze.image.getHeight()));
+        this.setPreferredSize(new Dimension(maze.image.getWidth(), maze.image.getHeight()+ 60));
         this.setBackground(Color.BLACK);
         this.setDoubleBuffered(true); // draw in back buffer while showing the other one
         
@@ -65,23 +67,31 @@ public class Game extends JPanel implements Runnable
         game_thread.start();
     }
 
-    public void run()
-    {
-        while(game_thread != null)
-        {
+    public void run() {
+        long lastScoreUpdateTime = System.nanoTime();
+        double nsPerSecond = 1_000_000_000.0;
+
+        while (game_thread != null) {
             final long frameStartNano = System.nanoTime();
 
             update();
-            this.repaint(); // call paintComponent()
+            this.repaint();
 
             final long frameEndNano = System.nanoTime();
-            final long sleepTimeNano = 16666667 - (frameEndNano - frameStartNano);
-            final long sleepTimeMillis = (long)((float)sleepTimeNano * 1E-6f);
-            try
-            {
+            final long sleepTimeNano = 16_666_667 - (frameEndNano - frameStartNano); // 60 FPS
+            final long sleepTimeMillis = (long) ((float) sleepTimeNano * 1E-6f);
+            try {
                 Thread.sleep(sleepTimeMillis);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            catch (Exception e) {}
+
+            long now = System.nanoTime();
+            double deltaTime = (now - lastScoreUpdateTime) / nsPerSecond;
+            if (deltaTime >= 1.0) {
+                score += 10;
+                lastScoreUpdateTime = now;
+            }
         }
     }
 
@@ -118,6 +128,9 @@ public class Game extends JPanel implements Runnable
         if(!pacmanWillCollideWithWall(pacman.position_x, pacman.position_y + move_distance_y))
         {
             pacman.position_y += move_distance_y;
+        }
+        if (score > highScore) {
+            highScore = score;
         }
     }
 
@@ -205,6 +218,11 @@ public class Game extends JPanel implements Runnable
             g.drawImage(AI.image, (int)AI.position_x + maze.image.getWidth(), (int)AI.position_y, AI.image.getWidth(), AI.image.getHeight(), null);
         if(AI.position_x + AI.image.getWidth() >= maze.image.getWidth())
             g.drawImage(AI.image, (int)AI.position_x - maze.image.getWidth(), (int)AI.position_y, AI.image.getWidth(), AI.image.getHeight(), null);
+
+        g.setColor(Color.WHITE);
+        g.setFont(new Font("Arial", Font.BOLD, 20));
+        g.drawString("Score: " + score, 10, maze.image.getHeight() + 20);
+        g.drawString("High Score: " + highScore, 10, maze.image.getHeight() + 40);
 
         g.dispose();// always at the end
     }
