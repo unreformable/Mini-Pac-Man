@@ -4,6 +4,9 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
+/**
+ * Title character - the Pacman!
+ */
 public class Pacman
 {
     public float position_x;

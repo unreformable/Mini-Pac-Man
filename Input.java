@@ -3,6 +3,11 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
+/**
+ * Gives information about input state (keyboard, mouse).
+ * 
+ * More information about methods in KeyListener and MouseListener interfaces.
+ */
 public class Input implements KeyListener, MouseListener
 {
     public boolean up = false;
