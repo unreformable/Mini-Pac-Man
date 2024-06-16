@@ -15,6 +15,10 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Font;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
 
 public class Game extends JPanel implements Runnable
 {
@@ -39,6 +43,7 @@ public class Game extends JPanel implements Runnable
         pacman = new Pacman(10, 117, "assets/pacman.png");
         maze = new Maze(8, "assets/maze.png");
         AI = new AI(200, 117, "assets/ghost.png", maze);
+        highScore = loadHighScore();
         Thread AIThread = new Thread(AI);
         AIThread.start();
 
@@ -55,7 +60,7 @@ public class Game extends JPanel implements Runnable
         this.setPreferredSize(new Dimension(maze.image.getWidth(), maze.image.getHeight()+ 60));
         this.setBackground(Color.BLACK);
         this.setDoubleBuffered(true); // draw in back buffer while showing the other one
-        
+
         this.setFocusable(true);
         window.add(this);
 
@@ -131,6 +136,7 @@ public class Game extends JPanel implements Runnable
         }
         if (score > highScore) {
             highScore = score;
+            saveHighScore(highScore);
         }
     }
 
@@ -159,29 +165,21 @@ public class Game extends JPanel implements Runnable
 
         return (maze.tilemap[tileIdx] == Tile.WALL);
     }
-    private boolean AIWillCollideWithWall(float targetX, float targetY)
+    public void saveHighScore(int highScore)
     {
-        targetX += (AI.image.getWidth() / 2);
-        targetY += (AI.image.getHeight() / 2);
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("highscore.txt"))) {
+            writer.write(String.valueOf(highScore));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-        final int tiledTargetX = (int)targetX / maze.tile_length;
-        final int tiledTargetY = (int)targetY / maze.tile_length;
-
-        if(tiledTargetX <= 0 || tiledTargetX >= maze.tile_count_x
-                || tiledTargetY <= 0 || tiledTargetY >= maze.tile_count_y)
-            return false;
-
-        final int tileIdx = tiledTargetX + (tiledTargetY * maze.tile_count_x);
-
-
-        //System.out.print(tiledTargetX);
-        //System.out.print(" ");
-        //System.out.println(tiledTargetY);
-        //System.out.println(maze.tilemap[tileIdx]);
-        //System.out.println("");
-
-
-        return (maze.tilemap[tileIdx] == Tile.WALL);
+    }
+    private int loadHighScore() {
+        try (BufferedReader reader = new BufferedReader(new FileReader("highscore.txt"))) {
+            return Integer.parseInt(reader.readLine());
+        } catch (IOException | NumberFormatException e) {
+            return 0; // Domyślna wartość, jeśli nie można odczytać pliku
+        }
     }
 
     public void paintComponent(Graphics _g)
